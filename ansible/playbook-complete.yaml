@@ -1,0 +1,3 @@
+---
+- import_playbook: playbook-jenkins.yaml
+- import_playbook: playbook-docker.yaml

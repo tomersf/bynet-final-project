@@ -1,0 +1,31 @@
+- name: Jenkins installation on amznlinux2
+  hosts: jenkinsserver
+  become: true
+  gather_facts: no
+  tasks:
+    - name: Ensure Jenkins repository is added
+      ansible.builtin.yum_repository:
+        name: jenkins-ci
+        description: jenkins-ci package repository
+        baseurl: http://pkg.jenkins.io/redhat-stable
+        gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+        gpgcheck: yes
+    - name: Ensure gpp key is imported
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+    - name: Install java-openjdk11 package
+      command: amazon-linux-extras install java-openjdk11 -y
+    - name: Install Jenkins package
+      ansible.builtin.yum:
+        name: jenkins
+        state: present
+        update_cache: true
+    - name: Ensure systemd daemon reloaded
+      command: systemctl daemon-reload
+    - name: Ensure systemd daemon reloaded
+      command: systemctl enable jenkins
+    - name: Ensure Jenkins service is enabled and started
+      ansible.builtin.service:
+        name: jenkins
+        state: started

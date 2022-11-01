@@ -1,0 +1,10 @@
+- name: My first playbook
+  hosts: vms
+  gather_facts: no
+  tasks:
+    - name: Ping my vms
+      ansible.builtin.ping:
+    - name: Print msg
+      ansible.builtin.debug:
+        msg: Hello world!
+# ansible-playbook -i inventory.yaml playbook2.yaml --ask-become-pass

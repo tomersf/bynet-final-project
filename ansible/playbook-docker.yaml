@@ -1,0 +1,42 @@
+- name: Docker & Docker-compose installation on amznlinux2
+  hosts: vms
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Update all packages
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+        update_only: yes
+
+    # - name: Enable Some packages from amazon-linux-extras packages
+    #   shell: "amazon-linux-extras enable docker"
+
+    - name: clean yum metadata cache
+      ansible.builtin.command: yum clean metadata
+      args:
+        warn: false
+
+    - name: Install docker
+      ansible.builtin.yum:
+        name: docker
+        state: latest
+        update_cache: yes
+
+    - name: Enable Docker CE service at startup
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install Docker compose
+      ansible.builtin.pip:
+        name: docker-compose
+        executable: /usr/bin/pip3
+
+    - name: adding existing user 'cloud_user' to group docker
+      ansible.builtin.user:
+        name: "cloud_user"
+        groups: docker
+        append: yes
+      become: yes
