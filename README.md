@@ -25,8 +25,8 @@ MYSQL_DB=exercise
 MYSQL_USER=tomer
 MYSQL_PASSWORD=123456
 MYSQL_HOST=mysql
-REMOTE_USERNAME=<remote username of the course machine>
-REMOTE_PASSWORD=<your password for the course machine>
+REMOTE_COURSE_USERNAME=<remote username of the course machine>
+REMOTE_COURSE_PASSWORD=<your password for the course machine>
 
 MYSQL_ROOT_PASSWORD=root
 MYSQL_DATABASE=exercise
