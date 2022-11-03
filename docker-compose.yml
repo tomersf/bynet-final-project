@@ -1,28 +1,26 @@
 version: '3.8'
 services:
   mysql:
-    image: 'mysql:latest'
+    image: 'mysql:8.0.31'
     restart: always
     env_file: ./compose.env
     networks:
       - backend
+    volumes:
+      - mysql-vol:/var/lib/mysql
   nginx:
     depends_on:
       - api
       - client
     restart: always
-    build: 
-      dockerfile: Dockerfile.dev
-      context: ./nginx
+    build: ./nginx
     networks:
       - frontend
       - backend
     ports:
       - '3050:80'
   api:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./backend
+    build: ./backend
     networks:
       - backend
     env_file: ./compose.env
@@ -34,17 +32,17 @@ services:
     depends_on:
       - mysql
   client:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./frontend
+    build: ./frontend
     networks:
       - frontend
-    volumes:
-      - './frontend:/app'
-      - '/app/node_modules'
+    # volumes:
+    #   - './frontend:/app'
+    #   - '/app/node_modules'
     environment:
       - WDS_SOCKET_PORT=0
 
 networks:
   frontend:
   backend:
+volumes:
+  mysql-vol:

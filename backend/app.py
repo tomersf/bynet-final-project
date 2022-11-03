@@ -1,4 +1,4 @@
-from Db import AttendanceDB
+from db import AttendanceDB
 from Logger import Logger
 from env import env_config
 from flask import Flask, jsonify
