@@ -1,0 +1,45 @@
+- name: Install jenkins user on prod & test machines
+  hosts: testprod
+  gather_facts: no
+  become: yes
+  vars_files:
+    - secrets.yaml
+  vars:
+    username: jenkins
+    groupname: jenkins
+  tasks:
+    - name: Create {{ groupname }} group
+      ansible.builtin.group:
+        name: "{{ groupname }}"
+        state: present
+    - name: Create {{ username }} user
+      ansible.builtin.user:
+        name: "{{ username }}"
+        group: "{{ groupname }}"
+        password: "{{password | password_hash('sha512')}}"
+        shell: /bin/bash
+        create_home: yes
+        home: /home/{{ username }}
+    - name: Adding existing user {{ username }} to group docker
+      ansible.builtin.user:
+        name: "{{ username }}"
+        groups: docker
+        append: yes
+    - name: Add authorized ssh pub key for remote access
+      ansible.builtin.authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    - name: Disable Password Authentication
+      ansible.builtin.lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: "^PasswordAuthentication"
+        line: "PasswordAuthentication no"
+        state: present
+      notify:
+        - restart ssh
+  handlers:
+    - name: restart ssh
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

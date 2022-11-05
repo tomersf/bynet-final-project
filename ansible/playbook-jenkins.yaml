@@ -1,6 +1,8 @@
 - name: Jenkins installation on amznlinux2
   hosts: jenkinsserver
   become: true
+  vars_files:
+    - secrets.yaml
   gather_facts: no
   tasks:
     - name: Ensure Jenkins repository is added

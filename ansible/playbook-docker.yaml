@@ -1,6 +1,8 @@
 - name: Docker & Docker-compose installation on amznlinux2
   hosts: vms
   become: yes
+  vars_files:
+    - secrets.yaml
   gather_facts: no
   tasks:
     - name: Update all packages
@@ -33,10 +35,3 @@
       ansible.builtin.pip:
         name: docker-compose
         executable: /usr/bin/pip3
-
-    - name: adding existing user 'cloud_user' to group docker
-      ansible.builtin.user:
-        name: "cloud_user"
-        groups: docker
-        append: yes
-      become: yes
