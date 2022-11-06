@@ -2,3 +2,4 @@
 - import_playbook: playbook-jenkins.yaml
 - import_playbook: playbook-docker.yaml
 - import_playbook: playbook-user.yaml
+- import_playbook: playbook-hostnames.yaml

@@ -1,0 +1,36 @@
+- name: Set Hostnames mapping between servers
+  gather_facts: no
+  become: yes
+  vars_files:
+    - secrets.yaml
+  hosts: jenkinsserver
+  tasks:
+    - name: Set hostname of jenkins for Jenskins server
+      ansible.builtin.hostname:
+        name: jenkins
+    - name: Set test server hostname in jenkins server
+      ansible.builtin.lineinfile:
+        dest: /etc/hosts
+        regexp: "^test"
+        line: "{{test_server_priv_ip}} test"
+        state: present
+    - name: Set prod server hostname in jenkins server
+      ansible.builtin.lineinfile:
+        dest: /etc/hosts
+        regexp: "^test"
+        line: "{{prod_server_priv_ip}} prod"
+        state: present
+  hosts: testserver
+    - name: Set hostname of test for test server
+      ansible.builtin.hostname:
+        name: test
+    - name: Set prod server hostname in test server
+      ansible.builtin.lineinfile:
+        dest: /etc/hosts
+        regexp: "^prod"
+        line: "{{prod_server_priv_ip}} prod"
+        state: present
+  hosts: prodserver
+    - name: Set hostname of prod for prod server
+      ansible.builtin.hostname:
+        name: prod
