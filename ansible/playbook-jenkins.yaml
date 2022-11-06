@@ -1,4 +1,4 @@
-- name: Jenkins installation on amznlinux2
+- name: Jenkins installation on jenknis server & add jenkins user to docker group
   hosts: jenkinsserver
   become: true
   vars_files:
@@ -31,3 +31,8 @@
       ansible.builtin.service:
         name: jenkins
         state: started
+    - name: Adding existing user jenkins to group docker
+      ansible.builtin.user:
+        name: jenkins
+        groups: docker
+        append: yes

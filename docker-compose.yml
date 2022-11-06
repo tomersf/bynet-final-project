@@ -18,7 +18,7 @@ services:
       - frontend
       - backend
     ports:
-      - '3050:80'
+      - '80:80'
   api:
     build: ./backend
     networks:

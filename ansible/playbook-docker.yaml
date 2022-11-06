@@ -1,4 +1,4 @@
-- name: Docker & Docker-compose installation on amznlinux2
+- name: Docker & Docker-compose installation on amznlinux2 on all remote machines
   hosts: vms
   become: yes
   vars_files:

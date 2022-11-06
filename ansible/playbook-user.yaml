@@ -1,4 +1,4 @@
-- name: Install jenkins user on prod & test machines
+- name: Install jenkins user on remote machines & add to docker group & disable password authentication
   hosts: testprod
   gather_facts: no
   become: yes
@@ -29,7 +29,7 @@
       ansible.builtin.authorized_key:
         user: "{{ username }}"
         state: present
-        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        key: "{{ lookup('file', '/Users/tomershafir/Documents/projects/bynet/finalProject/bynet_pem.pub') }}"
     - name: Disable Password Authentication
       ansible.builtin.lineinfile:
         dest: /etc/ssh/sshd_config
