@@ -1,3 +1,2 @@
 *.env
-bynet.pem
-bynet_pem.pub
+bynet_unecrypted.pem

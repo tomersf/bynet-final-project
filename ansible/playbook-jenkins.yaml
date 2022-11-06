@@ -1,6 +1,9 @@
 - name: Jenkins installation on jenknis server & add jenkins user to docker group
   hosts: jenkinsserver
   become: true
+  vars:
+    username: jenkins
+    private_key: /Users/tomershafir/Documents/projects/bynet/finalProject/bynet.pem
   vars_files:
     - secrets.yaml
   gather_facts: no
@@ -23,11 +26,32 @@
         name: jenkins
         state: present
         update_cache: true
+    - name: Modify jenkins user to have home and shell
+      ansible.builtin.user:
+        name: jenkins
+        password: "{{password | password_hash('sha512')}}"
+        shell: /bin/bash
+        create_home: yes
+        home: /home/{{ username }}
+    - name: Create ssh directory for jenkins user
+      ansible.builtin.file:
+        path: /home/jenkins/.ssh
+        state: directory
+        owner: jenkins
+        group: jenkins
+        mode: 0700
+    - name: Copy ssh private key
+      ansible.builtin.copy:
+        src: "{{private_key}}"
+        dest: "/home/jenkins/.ssh/id_rsa"
+        mode: 0600
+        owner: jenkins
+        group: jenkins
     - name: Ensure systemd daemon reloaded
       command: systemctl daemon-reload
-    - name: Ensure systemd daemon reloaded
+    - name: Enable jenkins service
       command: systemctl enable jenkins
-    - name: Ensure Jenkins service is enabled and started
+    - name: Ensure Jenkins service is started
       ansible.builtin.service:
         name: jenkins
         state: started

@@ -25,7 +25,7 @@
         name: "{{ username }}"
         groups: docker
         append: yes
-    - name: Add authorized ssh pub key for remote access
+    - name: Add authorized ssh pub key for remote access on jenkins user
       ansible.builtin.authorized_key:
         user: "{{ username }}"
         state: present

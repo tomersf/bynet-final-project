@@ -8,7 +8,7 @@ check_args() {
     "prod") echo "Gonna deploy to PROD machine" ;;
     *)
         echo "ERROR! Got unknown argument ${machine}"
-        echo "Argument must be [prod | test]"
+        echo "Usage is ./deploy.sh [prod | test]"
         exit 1
         ;;
 
@@ -21,6 +21,7 @@ copy_compose_file_to_remote_machine() {
 
 deploy_to_test() {
     echo "Deploying to test..."
+    ssh
     copy_compose_file_to_remote_machine
     exit 0
 }
