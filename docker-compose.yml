@@ -13,14 +13,14 @@ services:
       - api
       - client
     restart: always
-    build: ./nginx
+    image: "tomersf/bynet-nginx:${BUILD_NUMBER}"
     networks:
       - frontend
       - backend
     ports:
       - '80:80'
   api:
-    build: ./backend
+    image: "tomersf/bynet-api:${BUILD_NUMBER}"
     networks:
       - backend
     env_file: ./compose.env
@@ -32,7 +32,7 @@ services:
     depends_on:
       - mysql
   client:
-    build: ./frontend
+    image: "tomersf/bynet-client:${BUILD_NUMBER}"
     networks:
       - frontend
     ports:

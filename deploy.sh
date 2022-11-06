@@ -70,15 +70,10 @@ validate_compose_network_and_volume_on_remote_machine() {
     create_docker_volumes_on_remote_machine
 }
 
-validate_nginx_and_mysql_are_up() {
-
-}
-
 deploy() {
     ssh "${machine}" "mkdir -p ${REMOTE_DIR}/final-project"
     copy_files_to_remote_machine
     validate_compose_network_and_volume_on_remote_machine
-    validate_nginx_and_mysql_are_up
     if [[ "$machine" == 'test' ]]; then
         deploy_to_test
     else
