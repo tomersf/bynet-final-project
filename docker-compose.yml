@@ -35,6 +35,8 @@ services:
     build: ./frontend
     networks:
       - frontend
+    ports:
+      - '3001:3000'
     # volumes:
     #   - './frontend:/app'
     #   - '/app/node_modules'
@@ -43,6 +45,9 @@ services:
 
 networks:
   frontend:
+    external: true
   backend:
+   external: true
 volumes:
   mysql-vol:
+    external: true
