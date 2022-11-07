@@ -9,11 +9,9 @@ pipeline {
         stage('Start') {
             steps {
                 echo "Starting build..."
+                echo "ls"
                 slackSend color: "good", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
             }
-        }
-        stage('Checkout') {
-            
         }
         stage('Build Docker Image') {
             steps {
