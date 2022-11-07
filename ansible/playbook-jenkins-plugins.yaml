@@ -1,0 +1,25 @@
+- name: Install additional plugins for jenkins
+  hosts: jenkinsserver
+  become: true
+  vars_files:
+    - secrets.yaml
+  gather_facts: no
+  tasks:
+    - name: Install plugins
+      community.general.jenkins_plugin:
+        name: "{{ item }}"
+        url_username: "{{ jenkins_admin_username }}"
+        url_password: "{{ jenkins_admin_password }}"
+        url: http://localhost:8080
+        state: latest
+      with_items:
+        - docker-workflow
+        - slack
+    - name: Stop jenkins service
+      ansible.builtin.service:
+        name: jenkins
+        state: stopped
+    - name: Start jenkins service
+      ansible.builtin.service:
+        name: jenkins
+        state: started

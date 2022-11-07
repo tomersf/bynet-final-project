@@ -20,7 +20,12 @@
         regexp: "^test"
         line: "{{prod_server_priv_ip}} prod"
         state: present
-  hosts: testserver
+- hosts: testserver
+  gather_facts: no
+  become: yes
+  vars_files:
+    - secrets.yaml
+  tasks:
     - name: Set hostname of test for test server
       ansible.builtin.hostname:
         name: test
@@ -30,7 +35,12 @@
         regexp: "^prod"
         line: "{{prod_server_priv_ip}} prod"
         state: present
-  hosts: prodserver
+- hosts: prodserver
+  vars_files:
+    - secrets.yaml
+  become: yes
+  gather_facts: no
+  tasks:
     - name: Set hostname of prod for prod server
       ansible.builtin.hostname:
         name: prod

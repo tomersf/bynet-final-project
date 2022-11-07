@@ -6,10 +6,14 @@ pipeline {
         CLIENT_DOCKERFILE_PATH = "${env.WORKSPACE/frontend}"
     }
     stages {
-        stage('Build') {
+        stage('Start') {
             steps {
-                echo 'Running build automation'
+                echo "Starting build..."
+                slackSend color: "good", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
             }
+        }
+        stage('Checkout') {
+            
         }
         stage('Build Docker Image') {
             steps {
@@ -23,7 +27,7 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-login') {
                         api.push("${env.BUILD_NUMBER}")
                         api.push("latest")
                         nginx.push("${env.BUILD_NUMBER}")
@@ -49,6 +53,26 @@ pipeline {
                 milestone(1)
                 sh "${env.WORKSPACE}/deploy.sh prod"
             }
+        }
+    }
+    post {
+        always {
+            echo 'Finished running pipeline... gonna cleanup'
+            cleanWs()
+        }
+        success {
+            slackSend color: 'good', message:"Build was successful!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+        unstable {
+            slackSend color: 'warning', message:"Build is unstable!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+
+        changed {
+            slackSend color: 'warning', message:"Build was changed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+
+        failure {
+            slackSend color: 'danger',failOnError:true message:"Build failed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
     }
 }

@@ -43,7 +43,12 @@ copy_files_to_remote_machine() {
 
 deploy_to_test() {
     echo "Deploying to test..."
-    copy_files
+    echo "Going to copy tests dir to TEST machine"
+    ssh "${machine}" "mkdir -p ${REMOTE_DIR}/final-project/tests"
+    scp -o StrictHostKeyChecking=no -r "${JENKINS_WORKSPACE}/tests" "${machine}:${REMOTE_DIR}/final-project/"
+    echo "Copied tests dir... going to run tests remotely"
+    ssh "${machine}" "cd ${REMOTE_DIR}/final-project/tests && source test.sh"
+    echo "Finshed running test.sh"
     exit 0
 }
 
