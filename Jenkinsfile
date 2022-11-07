@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        NGINX_DOCKERFILE_PATH = "${env.WORKSPACE/nginx}"
-        API_DOCKERFILE_PATH = "${env.WORKSPACE/backend}"
-        CLIENT_DOCKERFILE_PATH = "${env.WORKSPACE/frontend}"
+        NGINX_DOCKERFILE_PATH = "${env.WORKSPACE}/nginx"
+        API_DOCKERFILE_PATH = "${env.WORKSPACE}/backend"
+        CLIENT_DOCKERFILE_PATH = "${env.WORKSPACE}/frontend"
     }
     stages {
         stage('Start') {
@@ -64,11 +64,9 @@ pipeline {
         unstable {
             slackSend color: 'warning', message:"Build is unstable!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
-
         changed {
             slackSend color: 'warning', message:"Build was changed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
-
         failure {
             slackSend color: 'danger', failOnError:true, message:"Build failed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }

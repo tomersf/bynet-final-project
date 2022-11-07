@@ -17,44 +17,51 @@ check_args() {
 
 set_vars() {
     JENKINS_WORKSPACE="${WORKSPACE}"
+    JENKINS_BUILD_NUMBER="${BUILD_NUMBER}"
     REMOTE_DIR="/home/jenkins"
+    FINAL_PROJECT_PATH="${REMOTE_DIR}/final-project"
     MYSQL_VOLUME="mysql-vol"
     BACKEND_NETWORK="backend"
     FRONTEND_NETWORK="frontend"
 }
 
 copy_compose_file() {
-    scp -o StrictHostKeyChecking=no "${JENKINS_WORKSPACE}/docker-compose.yaml" "${machine}:${REMOTE_DIR}/final-project/"
+    scp -o StrictHostKeyChecking=no "${JENKINS_WORKSPACE}/docker-compose.yaml" "${machine}:${FINAL_PROJECT_PATH}/"
 }
 
 copy_compose_env_file() {
-    scp -o StrictHostKeyChecking=no "${JENKINS_WORKSPACE}/compose.env" "${machine}:${REMOTE_DIR}/final-project/"
+    scp -o StrictHostKeyChecking=no "${JENKINS_WORKSPACE}/compose.env" "${machine}:${FINAL_PROJECT_PATH}/"
 }
 
 copy_wait_for_script() {
-    scp -o StrictHostKeyChecking=no "${JENKINS_WORKSPACE}/wait-for.sh" "${machine}:${REMOTE_DIR}/final-project/"
+    scp -o StrictHostKeyChecking=no "${JENKINS_WORKSPACE}/wait-for.sh" "${machine}:${FINAL_PROJECT_PATH}/"
+}
+
+create_env_file() {
+    ssh "${machine}" "cd ${FINAL_PROJECT_PATH} && echo BUILD_NUMBER=${JENKINS_BUILD_NUMBER} > .env"
 }
 
 copy_files_to_remote_machine() {
     copy_compose_file
     copy_compose_env_file
+    create_env_file
     copy_wait_for_script
 }
 
-deploy_to_test() {
-    echo "Deploying to test..."
+copy_tests() {
     echo "Going to copy tests dir to TEST machine"
-    ssh "${machine}" "mkdir -p ${REMOTE_DIR}/final-project/tests"
-    scp -o StrictHostKeyChecking=no -r "${JENKINS_WORKSPACE}/tests" "${machine}:${REMOTE_DIR}/final-project/"
-    echo "Copied tests dir... going to run tests remotely"
-    ssh "${machine}" "cd ${REMOTE_DIR}/final-project/tests && source test.sh"
+    ssh "${machine}" "mkdir -p ${FINAL_PROJECT_PATH}/tests"
+    scp -o StrictHostKeyChecking=no -r "${JENKINS_WORKSPACE}/tests" "${machine}:${FINAL_PROJECT_PATH}/"
+    echo "Copied tests dir!"
+}
+
+run_tests() {
+    ssh "${machine}" "cd ${FINAL_PROJECT_PATH}/tests && source test.sh"
     echo "Finshed running test.sh"
-    exit 0
 }
 
 deploy_to_prod() {
     echo "Deploying to prod..."
-    exit 0
 }
 
 create_docker_volumes_on_remote_machine() {
@@ -73,6 +80,28 @@ create_docker_networks_on_remote_machine() {
 validate_compose_network_and_volume_on_remote_machine() {
     create_docker_networks_on_remote_machine
     create_docker_volumes_on_remote_machine
+}
+
+apply_docker_compose_test() {
+    ssh "${machine}" "cd ${FINAL_PROJECT_PATH} && docker compose down --rmi all &> /dev/null && docker compose up -d --no-build"
+}
+
+deploy_to_test() {
+    copy_tests
+    apply_docker_compose_test
+    run_tests
+}
+
+apply_docker_compose_prod() {
+    echo 'test'
+    # check if nginx & mysql are up - if not bring them up
+
+    # bring other services up and remove old ones
+    # docker compose rm -fsv
+}
+
+deploy_to_prod() {
+    apply_docker_compose_prod
 }
 
 deploy() {
