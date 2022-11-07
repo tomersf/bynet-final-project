@@ -26,6 +26,11 @@
         name: jenkins
         state: present
         update_cache: true
+    - name: Install git package
+      ansible.builtin.yum:
+        name: git
+        state: present
+        update_cache: true
     - name: Modify jenkins user to have home and shell
       ansible.builtin.user:
         name: jenkins
