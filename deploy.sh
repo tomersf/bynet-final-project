@@ -92,16 +92,50 @@ deploy_to_test() {
     run_tests
 }
 
-apply_docker_compose_prod() {
-    echo 'test'
-    # check if nginx & mysql are up - if not bring them up
+_apply_docker_compose_prod_helper_scale() {
+    local container_names_arr=$1
+    local replicas_count=$2
+    for container_name in $container_names_arr; do
+        local service_name
+        service_name=$(echo "${container_name}" | awk -F "[-]" '{print $2}')
+        echo "Going to scale service: ${service_name} to ${replicas_count} replicas"
+        ssh "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --scale ${service_name}=${replicas_count} --no-recreate"
+        echo "SUCCESS! Service: ${service_name} was scaled to ${replicas_count} replicas"
+    done
+}
 
-    # bring other services up and remove old ones
-    # docker compose rm -fsv
+apply_docker_compose_prod() {
+    # Need to get the current containers names in order to remove it after.
+    local sleep_time=$1
+    local container_names_arr
+    container_names_arr=$(ssh "${machine}" docker ps -f "name=.*api|.*client" | awk '{print $NF}')
+
+    # Scaling the relevant services, one container will be updated, one will be prev version.
+    echo "Going to scale up services..."
+    _apply_docker_compose_prod_helper_scale container_names_arr 2
+    echo "Finished scaling up.. sleeping for ${sleep_time}s for spin up time"
+    sleep "${sleep_time}"
+
+    # Remove the service with the outdated version
+    echo "Going to remove outdated containers & images..."
+    for container_name in $container_names_arr; do
+        echo "Going to remove container: ${container_name}"
+        ssh "${machine}" "cd ${FINAL_PROJECT_PATH} && docker rm -f ${container_name}"
+        echo "SUCCESS! Service: ${service_name} was scaled to ${replicas_count} replicas"
+    done
+
+    echo "Going to scale down services..."
+    _apply_docker_compose_prod_helper_scale container_names_arr 1
+    echo "Finished scaling down"
+
+}
+
+cleanup() {
+    ssh "${machine}" "docker container prune -f && docker image prune -af"
 }
 
 deploy_to_prod() {
-    apply_docker_compose_prod
+    apply_docker_compose_prod 5
 }
 
 deploy() {
@@ -113,6 +147,9 @@ deploy() {
     else
         deploy_to_prod
     fi
+    echo "Running cleanup func..."
+    cleanup
+    echo "Done running cleanup func..."
 }
 
 main() {
