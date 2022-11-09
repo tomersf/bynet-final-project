@@ -41,7 +41,7 @@ create_env_file() {
     ssh "${machine}" "cd ${FINAL_PROJECT_PATH} && echo BUILD_NUMBER=${JENKINS_BUILD_NUMBER} > .env"
 }
 
-copy_files_to_remote_machine() {
+copy_and_create_files_to_remote_machine() {
     copy_compose_file
     copy_compose_env_file
     create_env_file
@@ -140,16 +140,13 @@ deploy_to_prod() {
 
 deploy() {
     ssh "${machine}" "mkdir -p ${REMOTE_DIR}/final-project"
-    copy_files_to_remote_machine
+    copy_and_create_files_to_remote_machine
     validate_compose_network_and_volume_on_remote_machine
     if [[ "$machine" == 'test' ]]; then
         deploy_to_test
     else
         deploy_to_prod
     fi
-    echo "Running cleanup func..."
-    cleanup
-    echo "Done running cleanup func..."
 }
 
 main() {
@@ -162,6 +159,9 @@ main() {
     echo "Starting deplyoment to remote machine"
     deploy
     echo "Deployed successfully!"
+    echo "Running cleanup func..."
+    cleanup
+    echo "Done running cleanup func..."
 }
 
 main "$@"
