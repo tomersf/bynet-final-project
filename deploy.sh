@@ -56,7 +56,7 @@ copy_tests() {
 }
 
 run_tests() {
-    ssh "${machine}" "cd ${FINAL_PROJECT_PATH}/tests && source test.sh"
+    ssh "${machine}" "cd ${FINAL_PROJECT_PATH}/tests && ./test.sh"
     echo "Finshed running test.sh"
 }
 
