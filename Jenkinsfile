@@ -7,8 +7,8 @@ pipeline {
     }
     stages {
         stage('Start') {
-            slackSend color: "good", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
             steps {
+                slackSend color: "good", message: "Build Started: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
                 withCredentials([file(credentialsId: 'compose-env', variable: 'compose')]) {
                     writeFile file: 'compose.env', text: readFile(compose)
                 }
