@@ -19,12 +19,12 @@ check_site_response() {
         local ip
         ip=$(curl "http://checkip.amazonaws.com")
         if make_request "$ip"; then
-            exit 0
+            return 0
         else
-            exit 1
+            return 1
         fi
     else
-        exit 1
+        return 1
     fi
 }
 

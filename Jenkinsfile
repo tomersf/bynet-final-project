@@ -14,7 +14,7 @@ pipeline {
                 }
             }
         }
-        stage('Build Docker Image') {
+        stage('Build Docker Images') {
             steps {
                 script {
                     nginx = docker.build("tomersf/bynet-nginx","${NGINX_DOCKERFILE_PATH}")
@@ -35,6 +35,7 @@ pipeline {
                         client.push("latest")
                     }
                 }
+                sh 'docker image prune -af'
             }
         }
         stage('Deploy to test') {
