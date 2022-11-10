@@ -40,7 +40,6 @@ pipeline {
         }
         stage('Deploy to test') {
             steps {
-                milestone(1)
                 steps {
                     sh "${env.WORKSPACE}/deploy.sh test"
                 }
@@ -57,8 +56,10 @@ pipeline {
     }
     post {
         always {
+            script {
             echo 'Finished running pipeline... gonna cleanup'
             cleanWs()
+            }
         }
         success {
             slackSend color: 'good', message:"Build was successful!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
