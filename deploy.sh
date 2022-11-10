@@ -77,11 +77,9 @@ create_docker_volumes_on_remote_machine() {
 }
 
 create_docker_networks_on_remote_machine() {
-    echo "Starting to check / create docker compose networks"
-    ssh -o StrictHostKeyChecking=no "${machine}" <<'EOF'
-        docker network ls | grep ${BACKEND_NETWORK} > /dev/null || docker network create --driver bridge ${BACKEND_NETWORK} && echo created ${BACKEND_NETWORK} network
-        docker network ls | grep ${FRONTEND_NETWORK} >/dev/null || docker network create --driver bridge ${FRONTEND_NETWORK} && echo created ${BACKEND_NETWORK} network
-EOF
+    echo "Starting to check / create docker-compose networks"
+    ssh -o StrictHostKeyChecking=no "${machine}" "docker network ls | grep ${BACKEND_NETWORK} > /dev/null || docker network create --driver bridge ${BACKEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
+    ssh -o StrictHostKeyChecking=no "${machine}" "docker network ls | grep ${FRONTEND_NETWORK} >/dev/null || docker network create --driver bridge ${FRONTEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
     # ssh "${machine}" "docker network ls | grep ${BACKEND_NETWORK} > /dev/null || docker network create --driver bridge ${BACKEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
     # ssh "${machine}" "docker network ls | grep ${FRONTEND_NETWORK} > /dev/null || docker network create --driver bridge ${FRONTEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
     echo "Passed networks check / creation"
@@ -94,8 +92,9 @@ validate_compose_network_and_volume_on_remote_machine() {
 
 apply_docker_compose_test() {
     echo "Going to bring down compose in TEST and bring up the up-to-date one"
-    ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker compose down --rmi all &> /dev/null && docker compose up -d --no-build"
-    echo "SUCCESS! brought docker compose up in TEST"
+    ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose down --rmi all &> /dev/null && docker-compose up -d --no-build"
+    echo "SUCCESS! brought docker-compose up in TEST, going to sleep for 5s"
+    sleep 5
 }
 
 deploy_to_test() {
@@ -150,11 +149,11 @@ cleanup() {
 }
 
 deploy_to_prod() {
-    running_compose_projects_count=$(docker compose ls | wc -l | xargs)
+    running_compose_projects_count=$(docker-compose ls | wc -l | xargs)
     if [[ "$running_compose_projects_count" == '1' ]]; then
-        # No running docker compose at all
-        echo "No docker compose projects detected, going to run docker compose up in PROD"
-        ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker compose up -d --no-build"
+        # No running docker-compose at all
+        echo "No docker-compose projects detected, going to run - up in PROD"
+        ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --no-build"
     else
         # There is a running compose already
         echo "Detected already a running compose project, going to modify existing one"
