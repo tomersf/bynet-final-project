@@ -17,7 +17,7 @@ check_site_response() {
     local local_url=http://localhost
     if make_request $local_url; then
         local ip
-        ip=$(curl "http://checkip.amazonaws.com")
+        ip=$(curl -s "http://checkip.amazonaws.com")
         if make_request "$ip"; then
             return 0
         else

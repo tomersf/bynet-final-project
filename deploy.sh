@@ -58,7 +58,10 @@ copy_tests() {
 run_tests() {
     echo "Going to run tests"
     local result
-    result=$(ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH}/tests && ./test.sh")
+    local output
+    output=$(ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH}/tests && /bin/bash ./test.sh")
+    result=$?
+    echo "${output}"
     if [[ $result == '0' ]]; then
         echo "Finshed running test.sh successfuly!"
     else
@@ -66,23 +69,17 @@ run_tests() {
     fi
 }
 
-deploy_to_prod() {
-    echo "Deploying to prod..."
-}
-
 create_docker_volumes_on_remote_machine() {
-    echo "Creating volume: ${MYSQL_VOLUME}"
+    echo "Verifying volume: ${MYSQL_VOLUME} exists"
     ssh -o StrictHostKeyChecking=no "${machine}" "docker volume create ${MYSQL_VOLUME}"
-    echo "Passed volume creation"
+    echo "Passed volume verification"
 }
 
 create_docker_networks_on_remote_machine() {
-    echo "Starting to check / create docker-compose networks"
-    ssh -o StrictHostKeyChecking=no "${machine}" "docker network ls | grep ${BACKEND_NETWORK} > /dev/null || docker network create --driver bridge ${BACKEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
-    ssh -o StrictHostKeyChecking=no "${machine}" "docker network ls | grep ${FRONTEND_NETWORK} >/dev/null || docker network create --driver bridge ${FRONTEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
-    # ssh "${machine}" "docker network ls | grep ${BACKEND_NETWORK} > /dev/null || docker network create --driver bridge ${BACKEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
-    # ssh "${machine}" "docker network ls | grep ${FRONTEND_NETWORK} > /dev/null || docker network create --driver bridge ${FRONTEND_NETWORK} && echo created ${BACKEND_NETWORK} network"
-    echo "Passed networks check / creation"
+    echo "Starting to verify docker-compose networks"
+    ssh -o StrictHostKeyChecking=no "${machine}" "docker network ls | grep ${BACKEND_NETWORK} > /dev/null || docker network create --driver bridge ${BACKEND_NETWORK} && echo verified ${BACKEND_NETWORK} network exists"
+    ssh -o StrictHostKeyChecking=no "${machine}" "docker network ls | grep ${FRONTEND_NETWORK} >/dev/null || docker network create --driver bridge ${FRONTEND_NETWORK} && echo verified ${BACKEND_NETWORK} network exists"
+    echo "Passed networks verification"
 }
 
 validate_compose_network_and_volume_on_remote_machine() {
@@ -93,8 +90,8 @@ validate_compose_network_and_volume_on_remote_machine() {
 apply_docker_compose_test() {
     echo "Going to bring down compose in TEST and bring up the up-to-date one"
     ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose down --rmi all &> /dev/null && docker-compose up -d --no-build"
-    echo "SUCCESS! brought docker-compose up in TEST, going to sleep for 5s"
-    sleep 5
+    echo "SUCCESS! brought docker-compose up in TEST, going to sleep for 10s"
+    sleep 10
 }
 
 deploy_to_test() {
@@ -106,9 +103,10 @@ deploy_to_test() {
 _modify_docker_compose_prod_helper_scale() {
     local container_names_arr=$1
     local replicas_count=$2
+    echo "Going to scale up the following containers: ${container_names_arr}"
     for container_name in $container_names_arr; do
         local service_name
-        service_name=$(echo "${container_name}" | awk -F "[-]" '{print $2}')
+        service_name=$(echo "${container_name}" | awk -F "[_]" '{print $2}')
         echo "Going to scale service: ${service_name} to ${replicas_count} replicas"
         ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --scale ${service_name}=${replicas_count} --no-recreate"
         echo "SUCCESS! Service: ${service_name} was scaled to ${replicas_count} replicas"
@@ -120,11 +118,12 @@ modify_docker_compose_prod_with_sleep() {
     local sleep_time=$1
     local container_names_arr
     # Only going to scale api & client - not updating nginx(will cause downtime in the current setup)
-    container_names_arr=$(ssh -o StrictHostKeyChecking=no "${machine}" docker ps -f "name=.*api|.*client" | awk '{print $NF}')
-
+    container_names_arr=$(ssh -o StrictHostKeyChecking=no "${machine}" "docker ps -f 'name=.*api|.*client'")
+    container_names_arr=$(echo "$container_names_arr" | awk 'NR > 1 {print $NF}')
+    echo "Container names are ${container_names_arr}"
     # Scaling the relevant services, one container will be updated, one will be prev version.
     echo "Going to scale up services..."
-    _modify_docker_compose_prod_helper_scale container_names_arr 2
+    _modify_docker_compose_prod_helper_scale "$container_names_arr" 2
     echo "Finished scaling up.. sleeping for ${sleep_time}s for spin up time"
     sleep "${sleep_time}"
 
@@ -133,11 +132,10 @@ modify_docker_compose_prod_with_sleep() {
     for container_name in $container_names_arr; do
         echo "Going to remove container: ${container_name}"
         ssh -o StrictHostKeyChecking=no "${machine}" "docker rm -f ${container_name}"
-        echo "SUCCESS! Service: ${service_name} was scaled to ${replicas_count} replicas"
     done
 
     echo "Going to scale down services..."
-    _modify_docker_compose_prod_helper_scale container_names_arr 1
+    _modify_docker_compose_prod_helper_scale "$container_names_arr" 1
     echo "Finished scaling down"
 
 }
@@ -149,10 +147,10 @@ cleanup() {
 }
 
 deploy_to_prod() {
-    running_compose_projects_count=$(docker-compose ls | wc -l | xargs)
-    if [[ "$running_compose_projects_count" == '1' ]]; then
+    running_compose_projects_count=$(ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose ps | wc -l | xargs")
+    if [[ "$running_compose_projects_count" == '2' ]]; then
         # No running docker-compose at all
-        echo "No docker-compose projects detected, going to run - up in PROD"
+        echo "No docker-compose projects detected, going to run compose up in PROD"
         ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --no-build"
     else
         # There is a running compose already
