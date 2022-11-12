@@ -59,19 +59,24 @@ pipeline {
             script {
             echo 'Finished running pipeline... gonna cleanup'
             cleanWs()
+            sh 'docker image prune -af'
             }
         }
         success {
-            slackSend color: 'good', message:"Build was successful!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            slackSend   color: 'good',
+                        message:"Build was successful!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
         unstable {
-            slackSend color: 'warning', message:"Build is unstable!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            slackSend   color: 'warning',
+                        message:"Build is unstable!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
         changed {
-            slackSend color: 'warning', message:"Build was changed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            slackSend   color: 'warning',
+                        message:"Build was changed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
         failure {
-            slackSend color: 'danger', failOnError:true, message:"Build failed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            slackSend   color: 'danger',
+                        failOnError:true, message:"Build failed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
     }
 }
