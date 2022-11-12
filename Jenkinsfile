@@ -40,9 +40,7 @@ pipeline {
         }
         stage('Deploy to test') {
             steps {
-                steps {
-                    sh "${env.WORKSPACE}/deploy.sh test"
-                }
+                sh "${env.WORKSPACE}/deploy.sh test"
             }
         }
 
@@ -59,7 +57,6 @@ pipeline {
             script {
             echo 'Finished running pipeline... gonna cleanup'
             cleanWs()
-            sh 'docker image prune -af'
             }
         }
         success {
