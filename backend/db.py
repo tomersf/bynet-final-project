@@ -5,6 +5,7 @@ from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy_serializer import SerializerMixin
 from abc import ABC, abstractmethod
 from Logger import Logger
+from encryptor import Encryptor
 import os
 import pysftp
 
@@ -118,7 +119,7 @@ class AttendanceDB(DB):
 
     def _update_attendee_duration(self, attendee_dict, attendee_name):
         self._open_session(self.__update_attendee_duration,
-                           attendee_dict, attendee_name)
+                            attendee_dict, attendee_name)
 
     def __update_attendee_duration(self, local_session, attendee_dict, attendee_name):
         attendee_entry = local_session.query(self.model_attendee).filter(
@@ -160,10 +161,29 @@ class AttendanceDB(DB):
         return attendance['total_duration']
 
     def load_participants(self) -> bool:
-        flag1 = self._save_remote_csv_files_to_csv_files_local_dir()
-        flag2 = self._insert_csv_files_to_attendance_db()
-        print(f'FLAG 1 is {flag1} AND FLAG 2 is {flag2}')
-        return flag1 and flag2
+        fetched_remote_csv_files = False
+        inserted_data_to_db = False
+        loaded_local_csv_files = False
+        remote_csv_files_downloaded = self._save_remote_csv_files_to_csv_files_local_dir()
+        if remote_csv_files_downloaded:
+            inserted_data_to_db = self._insert_csv_files_to_attendance_db('csv_files_remote')
+        else:
+            Logger.ERROR('Unable to save remote csv files locally!!')
+            print('Going to try loading stored csv files locally!')
+            try:
+                Encryptor().decrypt_local_csv_files()
+                inserted_data_to_db = self._insert_csv_files_to_attendance_db(os.path.join('','csv_files_local','decrypted'))
+                if inserted_data_to_db:
+                    loaded_local_csv_files = True
+            except Exception as e:
+                Logger.ERROR('Unable to decrypt local csv files!!')
+                print(e)
+        print(f"""
+                Fetching remove csv files status: {fetched_remote_csv_files}
+                Loading local csv files status: {loaded_local_csv_files}
+                Inserting data to db status: {inserted_data_to_db}
+                """)
+        return (fetched_remote_csv_files or loaded_local_csv_files) and inserted_data_to_db
 
     def _save_remote_csv_files_to_csv_files_local_dir(self) -> bool:
         try:
@@ -175,7 +195,7 @@ class AttendanceDB(DB):
             with pysftp.Connection(remote_machine_ip, username=username, password=password, cnopts=cnopts) as sftp:
                 csv_files_path = env_config['REMOTE_MACHINE_CSV_FILES_PATH']
                 with sftp.cd(csv_files_path):
-                    local_dir = os.path.join(os.getcwd(), 'csv_files')
+                    local_dir = os.path.join(os.getcwd(), 'csv_files_remote')
                     if not os.path.isdir(local_dir):
                         os.mkdir(local_dir)
                     for filename in sftp.listdir('.'):
@@ -189,9 +209,9 @@ class AttendanceDB(DB):
             print(e)
             return False
 
-    def _insert_csv_files_to_attendance_db(self) -> bool:
+    def _insert_csv_files_to_attendance_db(self,relative_csv_files_path) -> bool:
         attendance_dict = get_attendance_dict_result(
-            os.path.join(os.getcwd(), 'csv_files'))
+            os.path.join(os.getcwd(), relative_csv_files_path))
         if not attendance_dict:
             Logger.ERROR('Attendance dict is empty!')
             return False
@@ -275,3 +295,17 @@ class AttendanceDB(DB):
         except Exception as e:
             self.close_unexpected_db_session(e, local_session)
             return False
+
+    def reload_data(self):
+        is_connected_to_db = False
+        if not self.connected:
+            is_connected_to_db = self.connect()
+        else:
+            is_connected_to_db = True
+        if not is_connected_to_db:
+            return False
+        is_participants_loaded = self.load_participants()
+        if not is_participants_loaded:
+            return False
+        return True
+        

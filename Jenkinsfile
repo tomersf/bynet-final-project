@@ -12,6 +12,8 @@ pipeline {
                 withCredentials([file(credentialsId: 'compose-env', variable: 'compose')]) {
                     writeFile file: 'compose.env', text: readFile(compose)
                 }
+                withCredentials([string(credentialsId: 'filekey', variable: 'filekey')]) {
+                    writeFile file: './backend/filekey.key', text: filekey
             }
         }
         stage('Build Docker Images') {

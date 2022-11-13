@@ -15,12 +15,12 @@ function App() {
 
   const fetchAttendees = async () => {
       const attendees = await axios.get('/api/attendees');
-      return attendees
+      return JSON.parse(attendees.data.result)
   }
 
-  const fetchMeetingsDuration = () => {
-    const meetingsDuration =  axios.get('/api/attendance');
-    return meetingsDuration
+  const fetchMeetingsDuration = async () => {
+    const meetingsDuration =  await axios.get('/api/attendance');
+    return JSON.parse(meetingsDuration.data.result)
   }
 
   const delay = new Promise((resolve, reject) => {
@@ -32,8 +32,9 @@ function App() {
     const fetchData = async () => {
       setLoading(true)
       const [meetingsDuration, attendees] = await Promise.all([fetchMeetingsDuration(),fetchAttendees(),delay])
+      console.log(meetingsDuration, attendees)
       setLoading(false)
-      setAttendeesList(attendees.data)
+      setAttendeesList(attendees)
       setTotalMeetingsDuration(parseFloat(meetingsDuration.data.total_duration).toFixed(2));
     }
     fetchData()

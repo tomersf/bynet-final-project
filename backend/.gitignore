@@ -129,5 +129,4 @@ dmypy.json
 .pyre/
 
 # Misc
-csv_files/
-
+filekey.key

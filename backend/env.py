@@ -13,5 +13,5 @@ env_config = {
     'REMOTE_MACHINE_USERNAME': os.getenv('REMOTE_COURSE_USERNAME') or os.getenv('REMOTE_USERNAME_DEV'),
     'REMOTE_MACHINE_PASSWORD': os.getenv('REMOTE_COURSE_PASSWORD') or os.getenv('REMOTE_PASSWORD_DEV'),
     'REMOTE_MACHINE_CSV_FILES_PATH': '/var/tmp/csv_files',
-    'REMOTE_MACHINE_IP': '185.164.16.144'
+    'REMOTE_MACHINE_IP': os.getenv('REMOTE_COURSE_IP') or os.getenv('REMOTE_COURSE_IP_DEV')
 }

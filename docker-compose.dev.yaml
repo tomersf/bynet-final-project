@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  mysql:
+    image: 'mysql:8.0.31'
+    restart: always
+    env_file: ./compose.env
+    networks:
+      - backend
+    volumes:
+      - mysql-vol:/var/lib/mysql
+  nginx:
+    depends_on:
+      - api
+      - client
+    restart: always
+    build: ./nginx/dev/
+    networks:
+      - frontend
+      - backend
+    ports:
+      - '3050:80'
+  api:
+    build: ./backend/
+    networks:
+      - backend
+    env_file: ./compose.env
+    command: sh -c '/app/wait-for.sh mysql:3306 -- flask run'
+    volumes:
+      - './wait-for.sh:/app/wait-for.sh'
+    ports:
+      - '5001:5000'
+    depends_on:
+      - mysql
+  client:
+    build: ./frontend/
+    networks:
+      - frontend
+    ports:
+      - '3001:3000'
+    # volumes:
+    #   - './frontend:/app'
+    #   - '/app/node_modules'
+    environment:
+      - WDS_SOCKET_PORT=0
+
+networks:
+  frontend:
+    external: true
+  backend:
+   external: true
+volumes:
+  mysql-vol:
+    external: true
