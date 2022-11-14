@@ -14,6 +14,7 @@ pipeline {
                 }
                 withCredentials([string(credentialsId: 'filekey', variable: 'filekey')]) {
                     writeFile file: './backend/filekey.key', text: filekey
+                }
             }
         }
         stage('Build Docker Images') {
@@ -78,4 +79,5 @@ pipeline {
                         failOnError:true, message:"Build failed!  - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
     }
+    
 }
