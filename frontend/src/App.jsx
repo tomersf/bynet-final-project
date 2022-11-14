@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 import "./App.css";
 import AttendeesList from "./components/AttendeesList";
-import SortingMenu from './components/SortingMenu';
+import Menu from './components/Menu';
 import TotalAttendance from './components/TotalAttendance'
 import loadingAnimation from './animations/loadingAnimation.json'
 
@@ -14,28 +14,37 @@ function App() {
   const [loading,setLoading] = useState(true)
 
   const fetchAttendees = async () => {
-      const attendees = await axios.get('/api/attendees');
-      return JSON.parse(attendees.data.result)
+      const attendeesResponse = await axios.get('/api/attendees');
+      return JSON.parse(attendeesResponse.data.result)
   }
 
   const fetchMeetingsDuration = async () => {
-    const meetingsDuration =  await axios.get('/api/attendance');
-    return JSON.parse(meetingsDuration.data.result)
+    const meetingsDurationResponse =  await axios.get('/api/attendance');
+    return JSON.parse(meetingsDurationResponse.data.result)
   }
 
   const delay = new Promise((resolve, reject) => {
     setTimeout(resolve, 2500);
   });
 
+  const reloadData = async () => {
+    setLoading(true)
+    const reloadResponse = await axios.get('/api/reload-data');
+    if (reloadResponse.data.result === true) {
+      await fetchMeetingsDuration()
+      await fetchAttendees()
+    }
+    setLoading(false)
+  }
+
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
       const [meetingsDuration, attendees] = await Promise.all([fetchMeetingsDuration(),fetchAttendees(),delay])
-      console.log(meetingsDuration, attendees)
       setLoading(false)
       setAttendeesList(attendees)
-      setTotalMeetingsDuration(parseFloat(meetingsDuration.data.total_duration).toFixed(2));
+      setTotalMeetingsDuration(parseFloat(meetingsDuration.total_duration).toFixed(2));
     }
     fetchData()
   },[]);
@@ -60,7 +69,7 @@ function App() {
   return (
     <div className="App">
       <TotalAttendance duration={totalMeetingsDuration} />
-      <SortingMenu attendees={attendeesList} setAttendeesList={setAttendeesList}/>
+      <Menu attendees={attendeesList} setAttendeesList={setAttendeesList} reloadData={reloadData}/>
       <AttendeesList attendees={attendeesList}/>
     </div>
   );

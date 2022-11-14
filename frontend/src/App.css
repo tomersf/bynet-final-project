@@ -8,3 +8,12 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
 }
+
+.Error {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+}

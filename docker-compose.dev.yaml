@@ -32,14 +32,16 @@ services:
     depends_on:
       - mysql
   client:
-    build: ./frontend/
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile.dev
     networks:
       - frontend
     ports:
       - '3001:3000'
-    # volumes:
-    #   - './frontend:/app'
-    #   - '/app/node_modules'
+    volumes:
+      - './frontend:/app'
+      - '/app/node_modules'
     environment:
       - WDS_SOCKET_PORT=0
 

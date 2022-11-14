@@ -5,7 +5,7 @@ import { Typography } from '@mui/material';
 import _ from 'lodash'
 
 
-export default function SortingMenu({attendees,setAttendeesList}) {
+export default function Menu({attendees,setAttendeesList, reloadData}) {
 
   const sortAscAttendees = (attendeeA,attendeeB) => {
     const res = parseInt(attendeeA.attendance_duration
@@ -33,12 +33,13 @@ export default function SortingMenu({attendees,setAttendeesList}) {
   }
 
   return (
-    <div style={{marginTop:'20px', marginBottom: '20px'}}>
-    <Typography variant='h4' sx={{color:'white'}}>Sorting Menu</Typography>
-    <Stack spacing={2} direction="row">
-      <Button variant="outlined" onClick={sortAscending}>Ascending</Button>
-      <Button variant="outlined" onClick={sortDescending}>Descending</Button>
-      <Button variant="outlined" onClick={random}>Random</Button>
+    <div style={{marginTop:'20px', marginBottom: '20px', width: '100%'}}>
+    <Typography variant='h4' sx={{color:'white',marginBottom:'10px'}}>Sorting Menu</Typography>
+    <Stack spacing={2} direction="row" style={{ textAlign: 'center', position:'relative',justifyContent: 'center'}}>
+      <Button variant="outlined" onClick={sortAscending} style={{width: 125}}>Ascending</Button>
+      <Button variant="outlined" onClick={sortDescending} style={{width: 125}}>Descending</Button>
+      <Button variant="outlined" onClick={random} style={{width: 125}}>Random</Button>
+      <Button variant="outlined" onClick={reloadData} style={{width: 125,position: 'absolute',right:6}}>FETCH DATA</Button>
     </Stack>
     </div>)
 };
