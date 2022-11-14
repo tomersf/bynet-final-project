@@ -164,8 +164,9 @@ class AttendanceDB(DB):
         fetched_remote_csv_files = False
         inserted_data_to_db = False
         loaded_local_csv_files = False
-        remote_csv_files_downloaded = self._save_remote_csv_files_to_csv_files_local_dir()
-        if remote_csv_files_downloaded:
+        fetched_remote_csv_files = self._save_remote_csv_files_to_csv_files_local_dir()
+        if fetched_remote_csv_files:
+            fetched_remote_csv_files = True
             inserted_data_to_db = self._insert_csv_files_to_attendance_db('csv_files_remote')
         else:
             Logger.ERROR('Unable to save remote csv files locally!!')
