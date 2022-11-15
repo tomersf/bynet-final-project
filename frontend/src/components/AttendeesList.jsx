@@ -7,7 +7,7 @@ import AttendeeCard from './AttendeeCard';
 export default function AttendeesList({attendees}) {
   if (attendees.length === 0) {
     return (
-      <Error message="Oops! unable to load data, please try again later!" />
+      <Error message="Seems that there is no attendees!" />
     )
   }
   return (
