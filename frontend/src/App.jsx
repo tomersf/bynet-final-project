@@ -83,7 +83,7 @@ function App() {
     <div className="App">
       <TotalAttendance duration={totalMeetingsDuration} />
       <Menu attendees={attendeesList} setAttendeesList={setAttendeesList} reloadData={reloadData}/>
-      <AttendeesList attendees={attendeesList}/>
+      {!error && <AttendeesList attendees={attendeesList}/>}
       {error && <Error message="Oops! unable to load data, please try again later!" /> }
     </div>
   );
