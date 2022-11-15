@@ -10,6 +10,7 @@ services:
     volumes:
       - mysql-vol:/var/lib/mysql
   nginx:
+    hostname: nginx
     depends_on:
       - api
       - client
@@ -21,6 +22,7 @@ services:
     ports:
       - '80:80'
   api:
+    hostname: api
     image: "tomersf/bynet-api:${BUILD_NUMBER}"
     networks:
       - backend
@@ -31,6 +33,7 @@ services:
     depends_on:
       - mysql
   client:
+    hostname: api
     image: "tomersf/bynet-client:${BUILD_NUMBER}"
     networks:
       - frontend
