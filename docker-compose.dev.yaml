@@ -9,6 +9,8 @@ services:
     volumes:
       - mysql-vol:/var/lib/mysql
   nginx:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - api
       - client
@@ -27,18 +29,17 @@ services:
     command: sh -c '/app/wait-for.sh mysql:3306 -- flask run'
     volumes:
       - './wait-for.sh:/app/wait-for.sh'
-    ports:
-      - '5001:5000'
+    # ports:
+    #   - '5000'
     depends_on:
       - mysql
   client:
     build:
       context: ./frontend/
-      dockerfile: Dockerfile.dev
     networks:
       - frontend
-    ports:
-      - '3001:3000'
+    # ports:
+    #   - '3000'
     volumes:
       - './frontend:/app'
       - '/app/node_modules'

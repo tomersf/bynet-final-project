@@ -88,8 +88,8 @@ validate_compose_network_and_volume_on_remote_machine() {
 }
 
 apply_docker_compose() {
-    echo "Going to bring down docker-compose and bring up the up-to-date one"
-    ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose down --rmi all &> /dev/null && docker-compose up -d --no-build"
+    echo "Going to update docker-compose and bring the up-to-date one"
+    ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --no-build && docker image prune -af"
     echo "SUCCESS! brought docker-compose up!"
 }
 
@@ -101,8 +101,62 @@ deploy_to_test() {
     run_tests
 }
 
+# deploy_to_prod() {
+#     apply_docker_compose
+# }
+
+_modify_docker_compose_prod_helper_scale() {
+    local container_names_arr=$1
+    local replicas_count=$2
+    echo "Going to scale the following containers: ${container_names_arr}"
+    local services=()
+    for container_name in $container_names_arr; do
+        local service_name
+        service_name=$(echo "${container_name}" | awk -F "[_]" '{print $2}')
+        services+=("$service_name")
+    done
+    echo "Going to scale services: ${services[*]} to ${replicas_count} replicas each"
+    ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --scale ${services[0]}=${replicas_count} --scale ${services[1]}=${replicas_count} --no-recreate"
+    echo "SUCCESS! Services: ${services[*]} were scaled to ${replicas_count} replicas"
+}
+
+modify_docker_compose_prod_with_sleep() {
+    # Need to get the current containers names in order to remove it after.
+    local sleep_time=$1
+    local container_names_arr
+    # Only going to scale api & client - not updating nginx(will cause downtime in the current setup)
+    container_names_arr=$(ssh -o StrictHostKeyChecking=no "${machine}" "docker ps -f 'name=.*api|.*client'")
+    container_names_arr=$(echo "$container_names_arr" | awk 'NR > 1 {print $NF}')
+    echo "Container names are ${container_names_arr}"
+    # Scaling the relevant services, one container will be updated, one will be prev version.
+    echo "Going to scale up services..."
+    _modify_docker_compose_prod_helper_scale "$container_names_arr" 2
+    echo "Finished scaling up.. sleeping for ${sleep_time}s for spin up time"
+    sleep "${sleep_time}"
+
+    # Remove the service with the outdated version
+    echo "Going to remove outdated containers & images..."
+    for container_name in $container_names_arr; do
+        echo "Going to remove container: ${container_name}"
+        ssh -o StrictHostKeyChecking=no "${machine}" "docker rm -f ${container_name}"
+    done
+
+    echo "Going to scale down services..."
+    _modify_docker_compose_prod_helper_scale "$container_names_arr" 1
+    echo "Finished scaling down"
+}
+
 deploy_to_prod() {
-    apply_docker_compose
+    running_compose_projects_count=$(ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose ps | wc -l | xargs")
+    if [[ "$running_compose_projects_count" == '2' ]]; then
+        # No running docker-compose at all
+        echo "No docker-compose projects detected, going to run compose up in PROD"
+        ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --no-build"
+    else
+        # There is a running compose already
+        echo "Detected already a running compose project, going to modify existing one"
+        modify_docker_compose_prod_with_sleep 5
+    fi
 }
 
 cleanup() {
@@ -138,57 +192,3 @@ main() {
 }
 
 main "$@"
-
-# deploy_to_prod() {
-#     running_compose_projects_count=$(ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose ps | wc -l | xargs")
-#     if [[ "$running_compose_projects_count" == '2' ]]; then
-#         # No running docker-compose at all
-#         echo "No docker-compose projects detected, going to run compose up in PROD"
-#         ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --no-build"
-#     else
-#         # There is a running compose already
-#         echo "Detected already a running compose project, going to modify existing one"
-#         modify_docker_compose_prod_with_sleep 5
-#     fi
-
-# }
-
-# _modify_docker_compose_prod_helper_scale() {
-#     local container_names_arr=$1
-#     local replicas_count=$2
-#     echo "Going to scale the following containers: ${container_names_arr}"
-#     for container_name in $container_names_arr; do
-#         local service_name
-#         service_name=$(echo "${container_name}" | awk -F "[_]" '{print $2}')
-#         echo "Going to scale service: ${service_name} to ${replicas_count} replicas"
-#         ssh -o StrictHostKeyChecking=no "${machine}" "cd ${FINAL_PROJECT_PATH} && docker-compose up -d --scale ${service_name}=${replicas_count} --no-recreate"
-#         echo "SUCCESS! Service: ${service_name} was scaled to ${replicas_count} replicas"
-#     done
-# }
-
-# modify_docker_compose_prod_with_sleep() {
-#     # Need to get the current containers names in order to remove it after.
-#     local sleep_time=$1
-#     local container_names_arr
-#     # Only going to scale api & client - not updating nginx(will cause downtime in the current setup)
-#     container_names_arr=$(ssh -o StrictHostKeyChecking=no "${machine}" "docker ps -f 'name=.*api|.*client'")
-#     container_names_arr=$(echo "$container_names_arr" | awk 'NR > 1 {print $NF}')
-#     echo "Container names are ${container_names_arr}"
-#     # Scaling the relevant services, one container will be updated, one will be prev version.
-#     echo "Going to scale up services..."
-#     _modify_docker_compose_prod_helper_scale "$container_names_arr" 2
-#     echo "Finished scaling up.. sleeping for ${sleep_time}s for spin up time"
-#     sleep "${sleep_time}"
-
-#     # Remove the service with the outdated version
-#     echo "Going to remove outdated containers & images..."
-#     for container_name in $container_names_arr; do
-#         echo "Going to remove container: ${container_name}"
-#         ssh -o StrictHostKeyChecking=no "${machine}" "docker rm -f ${container_name}"
-#     done
-
-#     echo "Going to scale down services..."
-#     _modify_docker_compose_prod_helper_scale "$container_names_arr" 1
-#     echo "Finished scaling down"
-
-# }

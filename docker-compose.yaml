@@ -11,6 +11,8 @@ services:
       - mysql-vol:/var/lib/mysql
   nginx:
     hostname: nginx
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - api
       - client
@@ -32,13 +34,17 @@ services:
       - './wait-for.sh:/app/wait-for.sh'
     depends_on:
       - mysql
+    ports:
+      - "5000-5001:5000"
   client:
-    hostname: api
+    hostname: client
     image: "tomersf/bynet-client:${BUILD_NUMBER}"
     networks:
       - frontend
     environment:
       - WDS_SOCKET_PORT=0
+    ports:
+      - "3000-3001:3000"
 
 networks:
   frontend:
