@@ -30,6 +30,7 @@ function App() {
   });
 
   const reloadData = async () => {
+    setError(null)
     setLoading(true)
     try {
       const reloadResponse = await axios.get('/api/reload-data');
