@@ -11,13 +11,13 @@
     - name: Set test server hostname in jenkins server
       ansible.builtin.lineinfile:
         dest: /etc/hosts
-        regexp: "^test"
+        regexp: "test"
         line: "{{test_server_priv_ip}} test"
         state: present
     - name: Set prod server hostname in jenkins server
       ansible.builtin.lineinfile:
         dest: /etc/hosts
-        regexp: "^test"
+        regexp: "prod"
         line: "{{prod_server_priv_ip}} prod"
         state: present
 - hosts: testserver
@@ -32,7 +32,7 @@
     - name: Set prod server hostname in test server
       ansible.builtin.lineinfile:
         dest: /etc/hosts
-        regexp: "^prod"
+        regexp: "prod"
         line: "{{prod_server_priv_ip}} prod"
         state: present
 - hosts: prodserver
