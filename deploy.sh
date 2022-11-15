@@ -108,9 +108,9 @@ deploy_to_test() {
 _modify_docker_compose_prod_helper_scale() {
     local container_names_arr=$1
     local replicas_count=$2
-    echo "Going to scale the following containers: ${container_names_arr}"
+    echo "Going to scale the following containers: ${container_names_arr[*]}"
     local services=()
-    for container_name in $container_names_arr; do
+    for container_name in "${container_names_arr[@]}"; do
         local service_name
         service_name=$(echo "${container_name}" | awk -F "[_]" '{print $2}')
         services+=("$service_name")
