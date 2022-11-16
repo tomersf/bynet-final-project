@@ -148,7 +148,7 @@ modify_docker_compose_prod_with_sleep() {
     done
 
     echo "Going to scale down services..."
-    _modify_docker_compose_prod_helper_scale "${container_names_arr[@]}" 1
+    _modify_docker_compose_prod_helper_scale "${container_names_arr[*]}" 1
     echo "Finished scaling down"
 }
 
