@@ -22,27 +22,26 @@ services:
     ports:
       - '3050:80'
   api:
-    build: ./backend/
+    image: tomersf/bynet-api
     networks:
       - backend
     env_file: ./compose.env
     command: sh -c '/app/wait-for.sh mysql:3306 -- flask run'
     volumes:
       - './wait-for.sh:/app/wait-for.sh'
-    # ports:
-    #   - '5000'
+    ports:
+      - '5001-5002:5000'
     depends_on:
       - mysql
   client:
-    build:
-      context: ./frontend/
+    image: tomersf/bynet-client
     networks:
       - frontend
-    # ports:
-    #   - '3000'
-    volumes:
-      - './frontend:/app'
-      - '/app/node_modules'
+    ports:
+      - '5003-5004:3000'
+    # volumes:
+    #   - './frontend:/app'
+    #   - '/app/node_modules'
     environment:
       - WDS_SOCKET_PORT=0
 

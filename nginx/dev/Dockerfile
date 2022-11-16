@@ -1,2 +1,2 @@
-FROM nginx:1.23.2
+FROM mrlioncub/nginx_upstream_check_module
 COPY ./default.conf /etc/nginx/conf.d/default.conf
